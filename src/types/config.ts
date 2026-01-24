@@ -336,7 +336,7 @@ export type WidgetComponentType =
 	| "categories"
 	| "tags"
 	| "toc"
-	| "music-player"
+	| "music-player" //音乐播放器
 	| "pio" // 添加 pio 组件类型
 	| "site-stats" // 站点统计组件
 	| "calendar" // 日历组件
@@ -457,3 +457,4 @@ export type PioConfig = {
 export type ShareConfig = {
 	enable: boolean; // 是否启用分享功能
 };
+

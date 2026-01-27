@@ -2,7 +2,7 @@
 title: Ubuntu 24.04配置yolo深度学习全套流程
 published: 2026-01-26
 pinned: false
-description: 语言运用笔记
+description: 从配置环境到训练推理一条龙
 tags: [深度学习,coding,yolo]
 category: 深度学习
 draft: false

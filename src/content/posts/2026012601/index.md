@@ -1,11 +1,24 @@
-# Ubuntu 24.04配置深度学习全套流程  
+---
+title: Ubuntu 24.04配置yolo深度学习全套流程
+published: 2026-01-26
+pinned: false
+description: 语言运用笔记
+tags: [深度学习,coding,yolo]
+category: 深度学习
+draft: false
+date: 2026-01-26
+pubDate: 2026-01-26
+---
+
+
+# Ubuntu 24.04配置yolo深度学习全套流程  
 
 **写在前面，文章有可能存在错误，如果发现了有毛病，欢迎随时提出pr，我会尽快合并**
 
 ## 前言
 最近出现了爆火的萝卜，真棒，里面的哈基米通过努力地学习(bushi)来识别出萝卜和纸巾，为此，这篇文章讲简单介绍用大开门的视频数据进行识别，训练一个属于自己的yolo识别模型，并用它进行推理。
 
-笔者使用的是ubuntu默认的24.04终端，系统信息如下，没有特别说明都是在终端进行的，下面开始教程
+笔者使用的是ubuntu默认的24.04终端，系统信息如下，没有特别说明都是在终端进行的，下面开始教程  
 ``` bash
 (base) luomo@luomo-YAOSHI-Series:~$ lsb_release -a
 No LSB modules are available.
@@ -15,6 +28,11 @@ Release:	24.04
 Codename:	noble
 (base) luomo@luomo-YAOSHI-Series:~$ 
 ```
+
+## 下载github仓库
+
+前往我的github仓库链接下载配置环境需要的相关文件  
+**https://github.com/luomojim/yolo-26-train**
 
 ## 配置miniconda前置环境
 首先我们先下载miniconda，这个是python里面比较常用的包管理的工具，类似我们在启动minecraft里面的环境隔离，譬如一个地方用python3.10,一个是3.9,这样可以避免安装进同一个系统导致环境冲突。  
@@ -34,7 +52,7 @@ bash Miniconda3-latest-Linux-x86_64.sh
 ```
 
 #### 修改安装的目录
-当终端里面提示安装目录的时候，可以修改路径，一般可以不做修改
+当终端里面提示安装目录的时候，可以修改路径，一般可以不做修改,继续按下回车下一步
 ``` bash
 Miniconda3 will now be installed into this location:
 /home/luomo/miniconda3
@@ -235,7 +253,7 @@ yolo_dataset/
 ```
 
 #### 创建data.yaml文件
-上面的yaml文件是没有的，需要我们手动添加，按照下面的格式创建这个文件。
+上面的yaml文件是没有的，需要我们手动添加，按照下面的格式创建这个文件。弄好之后再复制一份到根目录。
 ``` yaml
 # 数据集配置文件
 train: yolo_dataset/train/images  # 训练集图片路径
@@ -316,11 +334,45 @@ Successfully installed certifi-2026.1.4 charset_normalizer-3.4.4 contourpy-1.3.2
 
 ## 运行yolo模型
 
+#### yolo的文件结构
+
+在仓库里面存放着下面的文件夹
+- dataset:里面是labelme标注好的标签文件夹，json文件，转换成yolo格式的txt文本标签还有class_name
+- datasettools:存放着数据集工具
+- runs:稍后运行yolo训练会生成的训练文件
+- test_image:测试用的图像
+- test_video:测试用的视频
+- tools:里面放着运行yolo推理的相关文件
+- ultralytics:里面是yolo的主文件
+- yolo_dataset:转换好的yolo数据集
+- data.yaml:里面是数据集的信息文件
+- order.txt:里面是一些命令
+- yoloxxx.pt:这个后缀的是yolo的默认权重文件
+
 #### 运行模型训练
 完成了前面的全部工作，就可以开始训练模型了！在终端输入如下预设命令可以开始训练。  
 ``` bash
 yolo task=detect mode=train model=yolo26n.pt data=data.yaml epochs=100 imgsz=640 batch=16 device='cuda'
 ```
+
+如果在训练过程中中断，训练目录会有last.pt进行保存用于从中断的地方继续训练，运行下面的命令以继续训练。
+``` bash
+yolo task=detect mode=train model=runs/detect/train/weights/last.pt data=data.yaml epochs=100 resume=True
+```
+
+**训练命令的参数讲解**
+
+| 参数名称 | 含义与作用 | 示例值 | 备注 |
+| :--- | :--- | :--- | :--- |
+| **`task`** | 指定任务类型 | `detect` | 可选 `segment`（实例分割）、`classify`（分类）等。 |
+| **`mode`** | 运行模式 | `train` | 可选 `val`（验证）、`predict`（预测）、`export`（导出）。 |
+| **`model`** | 定义模型结构或加载权重 | `yolo26n.pt` | 可直接使用预训练权重，或指向 `.yaml` 配置文件从头训练。 |
+| **`data`** | 数据集配置文件路径 | `data.yaml` | 该文件定义了数据集路径、类别数量及名称等。 |
+| **`epochs`** | 训练迭代的轮数 | `100` | 整个训练集将被完整遍历100次。 |
+| **`imgsz`** | 输入图像的尺寸 | `640` | 图像常被统一缩放为此尺寸（如640×640）以进行批量处理。 |
+| **`batch`** | 批量大小 | `16` | 一次迭代中用于计算梯度的样本数量。内存不足时可减小此值。 |
+| **`device`** | 指定训练设备 | `'cuda'` | 使用GPU加速训练。也可指定特定GPU（如`0`或`0,1`），`cpu`表示使用CPU。 |
+
 过一会我们将跑完了模型，生成了训练好的权重文件，我们需要进行推理来检验成果。  
 
 #### 查看训练结果
@@ -331,6 +383,64 @@ pip install pandas
 ```
 ![alt text](image-11.png)
 
+**本配置流程不深入去讲各个参数的含义，需要的话可以进一步进行学习(开坑？)**
+
 #### 进行图像推理
 
+当我们的模型训练完成之后，就可以拿去做推理了，通过运行工具目录下的**image_detect.py**来进行推理，就可以得到如下的结果
+![alt text](image-12.png)
+
 #### 进行视频推理
+
+视频推理也是同理，我在tools工具集下面准备好了py文件，填入权重文件和视频文件即可开始推理视频，运行**video_detect.py**来进行视频的推理。
+![alt text](image-13.png)
+
+#### 后续的改进
+
+可以看到我们训练的模型识别效果还有很大的提升空间，后续可以扩大数据集，提高模型的泛化能力，但这些都不在配置深度学习的范围里面了，我们也可以自己训练一个属于自己的yolo！  
+后续看情况在b站发一个视频教程来演示配套的流程。
+
+## github仓库的文件结构
+``` tree
+.
+├── dataset         # labelme数据集
+│   ├── images      # 数据集存放的图像
+│   └── json_labels # json标签
+├── datasettools    # 数据集工具
+│   ├── extract_video_frame.py  # 从视频截取图片
+│   ├── json_to_txt.py          # 从json转换到txt
+│   ├── see_json.py             # 查看json格式的标注情况
+│   ├── see_txt.py              # 检查转换后的标注情况
+│   ├── simplify_dataset.py     # 简化数据集
+│   └── split_dataset.py        # 划分数据集
+├── data.yaml       # yolo训练集的参数文件
+├── order.txt       # 一些命令
+├── runs            # 模型训练后存放的权重文件
+│   └── detect
+├── structure.md    # 结构树
+├── test_image      # 测试图像
+│   └── test_image.png
+├── test_video      # 测试视频
+│   └── 服务员培训中.mp4
+├── tools           # 文章用到的工具
+│   ├── check_cuda.py   # 检查cuda是否被正常安装
+│   ├── draw_chart.py   # 查看训练结果
+│   ├── image_detect.py # 图像推理
+│   └── video_detect.py # 视频推理
+├── ultralytics     # yolo主文件
+│
+└── yolo26n.pt      # 默认权重文件
+```
+
+## 仓库py文件常见的格式
+``` python
+img_folder_path = r'./dataset/images'  # 图片存放文件夹
+folder_path = r"./dataset/json_labels"  # 标注数据的文件地址
+txt_folder_path = r"./dataset/txt_labels"  # 转换后的txt标签文件存放的文件夹
+```
+一般而言，py文件找到这一行，都可以修改文件的各种参数  
+**if __name__ == "__main__":**
+
+## 一些常见问题
+**vscode提示无法解析导入xxx：**，按下ctrl+shift+p输入**Python: Select Interpreter**,看看python解释器有没有选中当前你激活的conda环境
+![alt text](image-14.png)

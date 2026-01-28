@@ -280,6 +280,9 @@ conda create -n yolo26 python=3.10 -y
 conda activate yolo26
 ```
 
+#### 切换vscode解释器
+在根目录下打开终端，**同时在vscode的设置中按照前面的操作切换解释器到当前所在环境,yolo26**
+
 #### 查看显卡支持的cuda环境
 在终端运行如下的代码
 ``` bash
@@ -311,6 +314,18 @@ Device name: NVIDIA GeForce RTX 5070 Ti Laptop GPU
 PyTorch version: 2.10.0+cu130
 CUDA version: 13.0
 ```
+
+**如果在执行这个py文件却抛出错误了，确定上述步骤没问题之后，可能是安装了cpu版本的pytorch**
+``` bash
+CUDA available: False
+AssertionError: Torch not compiled with CUDA enabled
+```
+
+**输入如下命令卸载原来的pytorch，并重新执行上面安装pytorch的命令**
+``` bash
+pip uninstall torch torchvision torchaudio
+```
+
 #### 准备前置文件和默认权重文件
 去yolo官方的github仓库去克隆ultralytics文件夹到电脑上(我的github仓库已自带)  
 github仓库链接:https://github.com/ultralytics/ultralytics
@@ -321,10 +336,7 @@ github仓库链接:https://github.com/ultralytics/ultralytics
 点击上面的蓝蓝的按钮就能下载，从上到下模型的参数量依次增加，参数量越大检测的速度越慢，但是精确度越高，下载完之后拖到根目录。
 
 #### 安装yolo
-在根目录下打开终端，cd到ultralytics文件夹进行安装
-``` bash
-cd ultralytics
-```
+
 安装ultralytics,过程会咕噜咕噜下载文件，需要比较长的时间。都弄到这了，去喝口水，眺望一下远方。
 ``` bash
 pip install ultralytics

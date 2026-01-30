@@ -24,7 +24,7 @@ const SITE_TIMEZONE = 8; //设置你的网站时区 from -12 to 12 default in UT
 export const siteConfig: SiteConfig = {
 	title: "落寞的小窝",
 	subtitle: "博客首页",
-	siteURL: "https://luomo-blog.vercel.app/", // 请替换为你的站点URL，以斜杠结尾
+	siteURL: "https://www.luomokomorebi.top/", // 请替换为你的站点URL，以斜杠结尾
 	siteStartDate: "2023-12-28", // 站点开始运行日期，用于站点统计组件计算运行天数
 
 	timeZone: SITE_TIMEZONE,
@@ -405,8 +405,8 @@ export const shareConfig: ShareConfig = {
 
 export const announcementConfig: AnnouncementConfig = {
 	title: "", // 公告标题，填空使用i18n字符串Key.announcement
-	content: "ブログへようこそ！これはサンプルの告知です", // 公告内容
-	closable: true, // 允许用户关闭公告
+	content: "これはお知らせですよ、ははは", // 公告内容
+	closable: false, // 允许用户关闭公告
 	link: {
 		enable: true, // 启用链接
 		text: "Learn More", // 链接文本

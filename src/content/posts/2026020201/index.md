@@ -209,6 +209,11 @@ sudo fc-cache -fv
 
 ![alt text](image-2.png)
 
+#### 在vscode中配置字体
+在vscode中，按下 ``ctrl + ,``进入设置，搜索终端文本``Integrated: Font Family``，在参数设置中改为如下配置：
+![alt text](image-3.png)
+
+之后在终端进行字体的安装
 ```bash
 # 克隆 Powerlevel10k 仓库
 git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ${ZSH_CUSTOM:-$HOME/.oh-my-zsh/custom}/themes/powerlevel10k
@@ -464,6 +469,13 @@ chsh -s /usr/bin/bash
 
 # 重新登录后生效
 ```
+
+## 最终效果
+![alt text](image-4.png)
+<center>系统自带终端</center>
+
+![alt text](image-5.png)
+<center>vscode终端</center>
 
 ## 一些疑难杂症
 ### 问题2: 命令建议不显示

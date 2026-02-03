@@ -1012,6 +1012,14 @@ function disableAnimation() {
 						(window as any).mobileTOCInit();
 					}, 100);
 				}
+
+				// 重新初始化右侧边栏中的 TOC 组件
+				const rightSidebarTOC = document.querySelector("#right-sidebar table-of-contents");
+				if (rightSidebarTOC && typeof (rightSidebarTOC as any).init === "function") {
+					setTimeout(() => {
+						(rightSidebarTOC as any).init();
+					}, 100);
+				}
 			}
 
 			// 重新初始化semifull模式的滚动检测

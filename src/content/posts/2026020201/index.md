@@ -478,7 +478,7 @@ chsh -s /usr/bin/bash
 <center>vscode终端</center>
 
 ## 一些疑难杂症
-### 问题2: 命令建议不显示
+### 命令建议不显示
 
 **症状**: zsh-autosuggestions 插件不工作。
 
@@ -496,7 +496,7 @@ grep "zsh-autosuggestions" ~/.zshrc
 source ~/.zshrc
 ```
 
-### 问题3: 语法高亮不工作
+### 语法高亮不工作
 
 **症状**: 命令输入时没有颜色提示。
 
@@ -514,7 +514,7 @@ plugins=(git zsh-autosuggestions zsh-syntax-highlighting)
 source ~/.zshrc
 ```
 
-### 问题4: 安装脚本无法执行
+### 安装脚本无法执行
 
 **症状**: 安装命令报错或无法连接。
 

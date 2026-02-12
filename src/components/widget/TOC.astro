@@ -217,12 +217,12 @@ class TableOfContents extends HTMLElement {
         };
         if (element) {
             element.addEventListener('animationend', tryInit, { once: true });
-            // 兜底：无论动画是否触发，300ms后强制初始化一次
-            setTimeout(tryInit, 300);
+            // 兜底：无论动画是否触发，1000ms后强制初始化一次，确保DOM已完全渲染
+            setTimeout(tryInit, 1000);
         } else {
             // 没有动画元素，直接初始化，兜底再延迟一次
             tryInit();
-            setTimeout(tryInit, 300);
+            setTimeout(tryInit, 1000);
         }
     };
 
@@ -284,9 +284,9 @@ class TableOfContents extends HTMLElement {
                 slug: h.id,
                 text: (h.textContent || '').replace(/#+\s*$/, '')
             }));
-        // 如果没有标题，延迟重试最多3次
-        if (headings.length === 0 && retryCount < 3) {
-            setTimeout(() => this.regenerateTOC(retryCount + 1), 120);
+        // 如果没有标题，延迟重试最多10次，增加等待时间确保DOM有足够时间渲染
+        if (headings.length === 0 && retryCount < 10) {
+            setTimeout(() => this.regenerateTOC(retryCount + 1), 200);
             return;
         }
         if (headings.length === 0) {

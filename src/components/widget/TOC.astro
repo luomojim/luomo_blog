@@ -357,10 +357,48 @@ class TableOfContents extends HTMLElement {
         this.observer.disconnect();
         this.tocEl?.removeEventListener("click", this.handleAnchorClick);
     };
+
+    reinit() {
+        // 清理现有状态
+        this.sections.forEach((section) =>
+            this.observer.unobserve(section)
+        );
+        this.observer.disconnect();
+        this.tocEl?.removeEventListener("click", this.handleAnchorClick);
+
+        // 重置状态
+        this.headingIdxMap.clear();
+        this.headings = [];
+        this.sections = [];
+        this.tocEntries = [];
+        this.active = [];
+        this.anchorNavTarget = null;
+        this.activeIndicator = null;
+
+        // 重新初始化
+        this.init();
+    };
 }
 
 if (!customElements.get("table-of-contents")) {
     customElements.define("table-of-contents", TableOfContents);
+}
+
+// 重新初始化 TOC 的辅助函数
+const reinitTOC = () => {
+    const toc = document.querySelector("table-of-contents#toc");
+    if (toc && toc instanceof TableOfContents) {
+        // 延迟执行，确保新页面内容已渲染
+        setTimeout(() => toc.reinit(), 100);
+    }
+};
+
+// 监听 Swup 页面切换事件（通过自定义事件）
+document.addEventListener("swup:page:view", reinitTOC);
+
+// 同时也通过 swup hooks 监听（如果 swup 已加载）
+if (typeof window !== "undefined" && (window as any).swup) {
+    (window as any).swup.hooks.on("page:view", reinitTOC);
 }
 </script>
 

@@ -217,12 +217,12 @@ class TableOfContents extends HTMLElement {
         };
         if (element) {
             element.addEventListener('animationend', tryInit, { once: true });
-            // 兜底：无论动画是否触发，300ms后强制初始化一次
-            setTimeout(tryInit, 300);
+            // 兜底：无论动画是否触发，1000ms后强制初始化一次，确保DOM已完全渲染
+            setTimeout(tryInit, 1000);
         } else {
             // 没有动画元素，直接初始化，兜底再延迟一次
             tryInit();
-            setTimeout(tryInit, 300);
+            setTimeout(tryInit, 1000);
         }
     };
 
@@ -284,9 +284,9 @@ class TableOfContents extends HTMLElement {
                 slug: h.id,
                 text: (h.textContent || '').replace(/#+\s*$/, '')
             }));
-        // 如果没有标题，延迟重试最多3次
-        if (headings.length === 0 && retryCount < 3) {
-            setTimeout(() => this.regenerateTOC(retryCount + 1), 120);
+        // 如果没有标题，延迟重试最多10次，增加等待时间确保DOM有足够时间渲染
+        if (headings.length === 0 && retryCount < 10) {
+            setTimeout(() => this.regenerateTOC(retryCount + 1), 200);
             return;
         }
         if (headings.length === 0) {
@@ -357,10 +357,48 @@ class TableOfContents extends HTMLElement {
         this.observer.disconnect();
         this.tocEl?.removeEventListener("click", this.handleAnchorClick);
     };
+
+    reinit() {
+        // 清理现有状态
+        this.sections.forEach((section) =>
+            this.observer.unobserve(section)
+        );
+        this.observer.disconnect();
+        this.tocEl?.removeEventListener("click", this.handleAnchorClick);
+
+        // 重置状态
+        this.headingIdxMap.clear();
+        this.headings = [];
+        this.sections = [];
+        this.tocEntries = [];
+        this.active = [];
+        this.anchorNavTarget = null;
+        this.activeIndicator = null;
+
+        // 重新初始化
+        this.init();
+    };
 }
 
 if (!customElements.get("table-of-contents")) {
     customElements.define("table-of-contents", TableOfContents);
+}
+
+// 重新初始化 TOC 的辅助函数
+const reinitTOC = () => {
+    const toc = document.querySelector("table-of-contents#toc");
+    if (toc && toc instanceof TableOfContents) {
+        // 延迟执行，确保新页面内容已渲染
+        setTimeout(() => toc.reinit(), 100);
+    }
+};
+
+// 监听 Swup 页面切换事件（通过自定义事件）
+document.addEventListener("swup:page:view", reinitTOC);
+
+// 同时也通过 swup hooks 监听（如果 swup 已加载）
+if (typeof window !== "undefined" && (window as any).swup) {
+    (window as any).swup.hooks.on("page:view", reinitTOC);
 }
 </script>
 

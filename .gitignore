@@ -44,3 +44,7 @@ src/pages/myself.astro
 
 # Bangumi generated data
 src/data/bangumi-data.json
+src/content/posts/.obsidian/app.json
+src/content/posts/.obsidian/appearance.json
+src/content/posts/.obsidian/workspace.json
+src/content/posts/.obsidian/core-plugins.json

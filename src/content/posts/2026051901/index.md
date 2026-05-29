@@ -83,41 +83,101 @@ return armors_;
 
 ### EKF
 ![[ekf.png]]
-如上图所示，我们先看状态向量
+如上图所示，我们先看状态向量  
+$$
+x=
+\begin{bmatrix}
+x_c & v_{x_c} & y_c & v_{y_c} & z_a & v_{z_a} & \psi & \dot\psi & r
+\end{bmatrix}^T
+$$
+这里使用了一个九维卡尔曼滤波来进行整车状态的估计，状态向量包含了旋转中心的x,y,z和三个分速度，还有车辆旋转的角度和装甲板的朝向角度,以及一个车辆半径r。
 
-## auto_aim_interfaces 消息
+#### 过程模型
 
-`Armor` 是 detector 输出的单块装甲板：
+这里为了简化计算，假设车辆进行匀速直线运动和匀速圆周运动
+$$
+x_c' = x_c + v_{x_c}\Delta t
+$$
+$$
+y_c' = y_c + v_{y_c}\Delta t
+$$
+$$
+z_a' = z_a + v_{z_a}\Delta t
+$$
+$$
+\psi' = \psi + \dot\psi\Delta t
+$$
 
-- `number`：装甲板数字分类结果。
-- `type`：大小装甲板，通常是 `small` 或 `large`。
-- `distance_to_image_center`：装甲板中心到图像中心的距离。
-- `pose`：装甲板在当前 header frame 下的位姿。
+#### 观测模型
+这里使用四个观测量来得到观测向量：
+$$
+z=
+\begin{bmatrix}
+x_a & y_a & z_a & \psi_a
+\end{bmatrix}^T
+$$
+然后观测模型中的装甲板的xy是直接使用整车中心减去r的正余弦反推出来
+$$
+x_a=x_c-r\cos\psi$$
+$$y_a=y_c-r\sin\psi
+$$
+因为这里出现了正余弦yaw,所以是非线性的，所以没法用一个常数矩阵H来解决，所以需要在估计点附近进行一次一阶泰勒展开，变成近似线性的H观测矩阵
 
-`Armors` 是 detector 每帧发布的装甲板数组：
+$$
+\frac{\partial x_a}{\partial x_c}=1,\quad
+\frac{\partial x_a}{\partial \psi}=r\sin\psi,\quad
+\frac{\partial x_a}{\partial r}=-\cos\psi
+$$
+$$
+\frac{\partial y_a}{\partial y_c}=1,\quad
+\frac{\partial y_a}{\partial \psi}=-r\cos\psi,\quad
+\frac{\partial y_a}{\partial r}=-\sin\psi
+$$
 
-- `header`：时间戳和坐标系。
-- `armors`：当前帧所有装甲板观测。
+#### 噪声矩阵
+这里过程噪声协方差用了一个连续时间白噪声加速度模型
 
-`Target` 是 tracker 对下游输出的目标状态：
+$$
+Q_{pos,vel}
+=
+\sigma^2
+\begin{bmatrix}
+\frac{\Delta t^4}{4} & \frac{\Delta t^3}{2}\\
+\frac{\Delta t^3}{2} & \Delta t^2
+\end{bmatrix}
+$$
 
-- `tracking`：当前是否处于有效跟踪。
-- `id`：当前跟踪目标的装甲板数字。
-- `armors_num`：目标车辆装甲板数量。
-- `position`：目标中心位置。
-- `velocity`：目标中心速度。
-- `yaw`、`v_yaw`：目标朝向和角速度。
-- `radius_1`、`radius_2`：目标中心到装甲板的半径。四装甲板目标可能存在两组半径。
-- `dz`：四装甲板目标两组装甲板的高度差。
+假设加速度是零均值白噪声，功率谱密度为 $σ^2$。对这个随机加速度积分一次得到速度扰动，积分两次得到位置扰动，经过Δt时间后，位置和速度的相关性就构成了上面这个2×2矩阵。
 
-`TrackerInfo` 是调试信息：
+而观测噪声矩阵则根据一个x乘以各个坐标xyz观测，而yaw的噪声则是固定的。
 
-- `position_diff`：当前观测和预测之间的位置差。
-- `yaw_diff`：当前观测和预测之间的 yaw 差。
-- `position`、`yaw`：未滤波的观测位置和 yaw。
+$$
+\mathbf{R}
+=
+\mathrm{diag}\!\left(
+|x \cdot z_0|,\;
+|x \cdot z_1|,\;
+|x \cdot z_2|,\;
+r_{\text{yaw}}
+\right)
+$$
 
-## 这套节点设计对我们项目的启发
+#### 预测更新
+预测步：
+$$
+x_{k|k-1}=f(x_{k-1|k-1})
+$$
+$$
+P_{k|k-1}=F P_{k-1|k-1} F^T+Q
+$$
 
-君瞄这套 ROS2 节点的分层还是很清楚的：相机负责图像，detector 负责当前帧观测，tracker 负责时序状态，下游串口或云台控制节点负责执行。每一层的数据类型也比较克制，不会把太多业务状态塞到一个节点里。
-
-不过它的代价也明显：图像流、识别结果、TF、目标状态都走 ROS2 topic/service/component 这一套。如果 detector 和相机不是进程内组合，`/image_raw` 的复制和调度成本会比较高。对我们现在的架构来说，可以先学习它的节点边界和消息定义，但后续真要做高帧率工业相机链路，最好把图像采集和检测尽量放到同一进程，或者至少使用 ROS2 composition / loaned message / shared memory 方向去减轻传输压力。
+更新步：
+$$
+K=P H^T(HPH^T+R)^{-1}
+$$
+$$
+x_{k|k}=x_{k|k-1}+K(z-h(x_{k|k-1}))
+$$
+$$
+P_{k|k}=(I-KH)P_{k|k-1}
+$$
